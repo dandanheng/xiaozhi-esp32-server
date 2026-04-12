@@ -32,8 +32,21 @@ class DeviceMCPExecutor(ToolExecutor):
             )
 
         try:
-            # 转换参数为JSON字符串
             import json
+
+            # 按工具 schema 约束对参数做范围截断
+            if arguments:
+                tool_data = conn.mcp_client.tools.get(tool_name, {})
+                properties = tool_data.get("inputSchema", {}).get("properties", {})
+                for param, value in list(arguments.items()):
+                    prop_schema = properties.get(param, {})
+                    minimum = prop_schema.get("minimum")
+                    maximum = prop_schema.get("maximum")
+                    if isinstance(value, (int, float)):
+                        if minimum is not None and value < minimum:
+                            arguments[param] = minimum
+                        elif maximum is not None and value > maximum:
+                            arguments[param] = maximum
 
             args_str = json.dumps(arguments) if arguments else "{}"
 
