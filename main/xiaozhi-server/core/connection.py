@@ -9,6 +9,7 @@ import asyncio
 import threading
 import traceback
 import subprocess
+import concurrent.futures
 import websockets
 
 from core.utils.util import (
@@ -207,6 +208,25 @@ class ConnectionHandler:
 
         # 初始化提示词管理器
         self.prompt_manager = PromptManager(self.config, self.logger)
+
+    def _query_memory_with_timeout(self, query: str, timeout: float = 3.0) -> str:
+        started_at = time.perf_counter()
+        future = asyncio.run_coroutine_threadsafe(
+            self.memory.query_memory(query), self.loop
+        )
+        try:
+            result = future.result(timeout=timeout)
+            elapsed_ms = (time.perf_counter() - started_at) * 1000
+            self.logger.bind(tag=TAG).debug(
+                f"记忆查询完成，耗时 {elapsed_ms:.1f}ms"
+            )
+            return result
+        except concurrent.futures.TimeoutError:
+            elapsed_ms = (time.perf_counter() - started_at) * 1000
+            self.logger.bind(tag=TAG).warning(
+                f"记忆查询超时，已降级为空记忆，耗时 {elapsed_ms:.1f}ms"
+            )
+            return ""
 
     async def handle_connection(self, ws: websockets.ServerConnection):
         try:
@@ -946,10 +966,7 @@ class ConnectionHandler:
             memory_str = None
             # 仅当query非空（代表用户询问）时查询记忆
             if self.memory is not None and query:
-                future = asyncio.run_coroutine_threadsafe(
-                    self.memory.query_memory(query), self.loop
-                )
-                memory_str = future.result()
+                memory_str = self._query_memory_with_timeout(query)
 
             if self.intent_type == "function_call" and functions is not None:
                 # 使用支持functions的streaming接口

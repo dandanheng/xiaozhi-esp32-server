@@ -239,12 +239,23 @@ class TTSProvider(TTSProviderBase):
                 self.ws_url, additional_headers=ws_header, max_size=1000000000
             )
             logger.bind(tag=TAG).debug("WebSocket连接建立成功")
-            
-            # 连接建立成功后，启动监听任务
+
+            # 发送 StartConnection 握手，等待 ConnectionStarted 确认
+            await self.start_connection()
+            conn_msg = await self.ws.recv()
+            conn_res = self.parser_response(conn_msg)
+            if conn_res.optional.event == EVENT_ConnectionStarted:
+                logger.bind(tag=TAG).debug(f"连接握手成功，connectionId: {conn_res.optional.connectionId}")
+            elif conn_res.optional.event == EVENT_ConnectionFailed:
+                raise Exception(f"连接握手失败: {conn_res.optional.response_meta_json}")
+            else:
+                logger.bind(tag=TAG).warning(f"连接握手收到未知响应: event={conn_res.optional.event}")
+
+            # 连接握手完成后，启动监听任务
             if self._monitor_task is None or self._monitor_task.done():
                 logger.bind(tag=TAG).debug("启动监听任务...")
                 self._monitor_task = asyncio.create_task(self._start_monitor_tts_response())
-            
+
             return self.ws
         except Exception as e:
             logger.bind(tag=TAG).error(f"建立连接失败: {str(e)}")
@@ -387,6 +398,7 @@ class TTSProvider(TTSProviderBase):
     async def start_session(self, session_id):
         logger.bind(tag=TAG).debug(f"开始会话～～{session_id}")
         try:       
+            await asyncio.sleep(0)
             # 等待上一个会话结束，最多等待3次
             for _ in range(3):
                 if not self.activate_session:
@@ -402,7 +414,14 @@ class TTSProvider(TTSProviderBase):
             self.activate_session = True
             
             # 确保连接建立
+            ensure_started_at = asyncio.get_running_loop().time()
             await self._ensure_connection()
+            ensure_elapsed_ms = (
+                asyncio.get_running_loop().time() - ensure_started_at
+            ) * 1000
+            logger.bind(tag=TAG).debug(
+                f"_ensure_connection 完成，耗时 {ensure_elapsed_ms:.1f}ms"
+            )
 
             header = Header(
                 message_type=FULL_CLIENT_REQUEST,
@@ -630,7 +649,7 @@ class TTSProvider(TTSProviderBase):
         #
         offset = 4
         optional = response.optional
-        if header.message_type == FULL_SERVER_RESPONSE or AUDIO_ONLY_RESPONSE:
+        if header.message_type in (FULL_SERVER_RESPONSE, AUDIO_ONLY_RESPONSE):
             # read event
             if header.message_type_specific_flags == MsgTypeFlagWithEvent:
                 optional.event = int.from_bytes(res[offset:8], "big", signed=True)

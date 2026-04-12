@@ -59,7 +59,7 @@ class ASRProvider(ASRProviderBase):
                 model=self.model_dir,
                 vad_kwargs={"max_single_segment_time": 30000},
                 disable_update=True,
-                hub="hf",
+                hub="ms",
                 # device="cuda:0",  # 启用GPU加速
             )
 
