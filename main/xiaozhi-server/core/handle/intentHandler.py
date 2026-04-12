@@ -13,6 +13,7 @@ from core.handle.sendAudioHandle import send_stt_message
 from core.handle.reportHandle import enqueue_tool_report
 from core.utils.util import remove_punctuation_and_length
 from core.providers.tts.dto.dto import TTSMessageDTO, SentenceType
+from plugins_func.functions.handle_exit_intent import FIXED_EXIT_RESPONSE
 
 TAG = __name__
 
@@ -62,8 +63,10 @@ async def check_direct_exit(conn: "ConnectionHandler", text):
         if text == cmd:
             conn.logger.bind(tag=TAG).info(f"识别到明确的退出命令: {text}")
             await send_stt_message(conn, text)
+            conn.sentence_id = str(uuid.uuid4().hex)
             conn.is_exiting = True
-            await conn.close()
+            conn.close_after_chat = True
+            speak_txt(conn, FIXED_EXIT_RESPONSE)
             return True
     return False
 

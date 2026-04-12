@@ -110,6 +110,7 @@ class VADProvider(VADProviderBase):
                     stop_duration = time.time() * 1000 - conn.last_activity_time
                     if stop_duration >= self.silence_threshold_ms:
                         conn.client_voice_stop = True
+                        conn.latency['t_vad_stop'] = time.monotonic()
                 if client_have_voice:
                     conn.client_have_voice = True
                     conn.last_activity_time = time.time() * 1000

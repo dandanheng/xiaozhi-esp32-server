@@ -1,6 +1,4 @@
 import os
-import io
-import sys
 import time
 import shutil
 import psutil
@@ -20,23 +18,6 @@ MAX_RETRIES = 2
 RETRY_DELAY = 1  # 重试延迟（秒）
 
 
-# 捕获标准输出
-class CaptureOutput:
-    def __enter__(self):
-        self._output = io.StringIO()
-        self._original_stdout = sys.stdout
-        sys.stdout = self._output
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        sys.stdout = self._original_stdout
-        self.output = self._output.getvalue()
-        self._output.close()
-
-        # 将捕获到的内容通过 logger 输出
-        if self.output:
-            logger.bind(tag=TAG).info(self.output.strip())
-
-
 class ASRProvider(ASRProviderBase):
     def __init__(self, config: dict, delete_audio_file: bool):
         super().__init__()
@@ -54,14 +35,14 @@ class ASRProvider(ASRProviderBase):
 
         # 确保输出目录存在
         os.makedirs(self.output_dir, exist_ok=True)
-        with CaptureOutput():
-            self.model = AutoModel(
-                model=self.model_dir,
-                vad_kwargs={"max_single_segment_time": 30000},
-                disable_update=True,
-                hub="ms",
-                # device="cuda:0",  # 启用GPU加速
-            )
+        logger.bind(tag=TAG).info(f"初始化 FunASR 模型: {self.model_dir}")
+        self.model = AutoModel(
+            model=self.model_dir,
+            vad_kwargs={"max_single_segment_time": 30000},
+            disable_update=True,
+            hub="ms",
+            # device="cuda:0",  # 启用GPU加速
+        )
 
     async def speech_to_text(
         self, opus_data: List[bytes], session_id: str, audio_format="opus", artifacts=None

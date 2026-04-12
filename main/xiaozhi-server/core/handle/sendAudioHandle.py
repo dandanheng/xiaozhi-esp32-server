@@ -17,6 +17,39 @@ AUDIO_FRAME_DURATION = 60
 PRE_BUFFER_COUNT = 5
 
 
+def _log_latency_summary(conn):
+    """输出全链路延迟汇总"""
+    lt = conn.latency
+    # 只有经过 VAD→ASR→LLM 的正常语音对话才输出
+    if 't_vad_stop' not in lt:
+        return
+
+    def _d(a, b):
+        if a in lt and b in lt:
+            return f"{lt[b] - lt[a]:.3f}s"
+        return "N/A"
+
+    parts = [
+        f"vad->asr: {_d('t_vad_stop', 't_asr_done')}",
+        f"asr->llm: {_d('t_asr_done', 't_llm_first')}",
+        f"llm->tts: {_d('t_llm_first', 't_tts_sent')}",
+        f"tts->audio: {_d('t_tts_sent', 't_tts_audio')}",
+        f"audio->device: {_d('t_tts_audio', 't_first_send')}",
+        f"TOTAL: {_d('t_vad_stop', 't_first_send')}",
+    ]
+    conn.logger.bind(tag=TAG).info("LATENCY | " + " | ".join(parts))
+
+    detail_parts = [
+        f"asr->startToChat: {_d('t_asr_done', 't_start_to_chat')}",
+        f"startToChat->submit: {_d('t_start_to_chat', 't_chat_submit')}",
+        f"submit->chat: {_d('t_chat_submit', 't_chat_start')}",
+        f"chat->memory: {_d('t_chat_start', 't_memory_done')}",
+        f"memory->llm_req: {_d('t_memory_done', 't_llm_request')}",
+        f"llm_req->first: {_d('t_llm_request', 't_llm_first')}",
+    ]
+    conn.logger.bind(tag=TAG).info("LATENCY_DETAIL | " + " | ".join(detail_parts))
+
+
 async def sendAudioMessage(conn: "ConnectionHandler", sentenceType, audios, text):
     if conn.tts.tts_audio_first_sentence:
         conn.logger.bind(tag=TAG).info(f"发送第一段语音: {text}")
@@ -243,6 +276,10 @@ async def _do_send_audio(conn: "ConnectionHandler", opus_packet, flow_control):
     """
     执行实际的音频发送
     """
+    if 't_first_send' not in conn.latency:
+        conn.latency['t_first_send'] = time.monotonic()
+        _log_latency_summary(conn)
+
     packet_index = flow_control.get("packet_count", 0)
     sequence = flow_control.get("sequence", 0)
 

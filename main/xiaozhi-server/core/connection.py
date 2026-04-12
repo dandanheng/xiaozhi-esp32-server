@@ -126,6 +126,7 @@ class ConnectionHandler:
         self.client_abort = False
         self.client_is_speaking = False
         self.client_listen_mode = "auto"
+        self.latency = {}
 
         # 线程任务相关
         self.loop = None  # 在 handle_connection 中获取运行中的事件循环
@@ -863,7 +864,15 @@ class ConnectionHandler:
 
         # 为最顶层时新建会话ID和发送FIRST请求
         if depth == 0:
+            self.latency["t_chat_start"] = time.monotonic()
             self.sentence_id = str(uuid.uuid4().hex)
+            # 保留早期时间戳，清除后续阶段的旧值
+            _saved = {
+                k: v
+                for k, v in self.latency.items()
+                if k in ("t_vad_stop", "t_asr_done", "t_start_to_chat", "t_chat_submit", "t_chat_start")
+            }
+            self.latency = _saved
             self.dialogue.put(Message(role="user", content=query))
             self.tts.tts_text_queue.put(
                 TTSMessageDTO(
@@ -967,6 +976,9 @@ class ConnectionHandler:
             # 仅当query非空（代表用户询问）时查询记忆
             if self.memory is not None and query:
                 memory_str = self._query_memory_with_timeout(query)
+            self.latency["t_memory_done"] = time.monotonic()
+
+            self.latency["t_llm_request"] = time.monotonic()
 
             if self.intent_type == "function_call" and functions is not None:
                 # 使用支持functions的streaming接口
@@ -1027,6 +1039,8 @@ class ConnectionHandler:
 
                 if content is not None and len(content) > 0:
                     if not tool_call_flag:
+                        if 't_llm_first' not in self.latency:
+                            self.latency['t_llm_first'] = time.monotonic()
                         response_message.append(content)
                         self.tts.tts_text_queue.put(
                             TTSMessageDTO(
@@ -1099,7 +1113,6 @@ class ConnectionHandler:
                         f"工具调用统计更新: 当前轮次={current_turn}"
                     )
 
-                # 如需要大模型先处理一轮，添加相关处理后的日志情况
                 if len(response_message) > 0:
                     text_buff = "".join(response_message)
                     self.tts_MessageText = text_buff

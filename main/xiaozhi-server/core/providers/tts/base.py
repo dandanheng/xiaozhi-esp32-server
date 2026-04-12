@@ -2,6 +2,7 @@ import os
 import re
 import uuid
 import queue
+import time
 import asyncio
 import threading
 import traceback
@@ -79,6 +80,8 @@ class TTSProviderBase(ABC):
         )
 
     def handle_opus(self, opus_data: bytes):
+        if 't_tts_audio' not in self.conn.latency:
+            self.conn.latency['t_tts_audio'] = time.monotonic()
         logger.bind(tag=TAG).debug(f"推送数据到队列里面帧数～～ {len(opus_data)}")
         self.tts_audio_queue.put((SentenceType.MIDDLE, opus_data, None))
 

@@ -107,8 +107,8 @@ class MarkdownCleaner:
     REGEXES = [
         (re.compile(r'```.*?```', re.DOTALL), ''),  # 代码块
         (re.compile(r'^#+\s*', re.MULTILINE), ''),  # 标题
-        (re.compile(r'(\*\*|__)(.*?)\1'), r'\2'),  # 粗体
-        (re.compile(r'(\*|_)(?=\S)(.*?)(?<=\S)\1'), r'\2'),  # 斜体
+        (re.compile(r'([*＊∗]{2}|__)(.*?)\1'), r'\2'),  # 粗体（支持Unicode星号变体）
+        (re.compile(r'([*＊∗]|_)(?=\S)(.*?)(?<=\S)\1'), r'\2'),  # 斜体（支持Unicode星号变体）
         (re.compile(r'!\[.*?\]\(.*?\)'), ''),  # 图片
         (re.compile(r'\[(.*?)\]\(.*?\)'), r'\1'),  # 链接
         (re.compile(r'^\s*>+\s*', re.MULTILINE), ''),  # 引用

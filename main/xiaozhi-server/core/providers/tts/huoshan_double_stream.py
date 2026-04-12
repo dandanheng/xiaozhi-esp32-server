@@ -1,4 +1,6 @@
 import os
+import re
+import time
 import uuid
 import json
 import queue
@@ -289,6 +291,7 @@ class TTSProvider(TTSProviderBase):
 
                 if message.sentence_type == SentenceType.FIRST:
                     self.conn.client_abort = False
+                    self.tts_audio_first_sentence = True
 
                 if self.conn.client_abort:
                     try:
@@ -380,10 +383,14 @@ class TTSProvider(TTSProviderBase):
 
             #  过滤Markdown
             filtered_text = MarkdownCleaner.clean_markdown(text)
+            # 兜底：清除所有星号变体，防止正则遗漏
+            filtered_text = re.sub(r'[*＊∗⁎]+', '', filtered_text)
 
             if filtered_text:
                 # 发送文本
                 await self.send_text(self.voice, filtered_text, self.conn.sentence_id)
+                if 't_tts_sent' not in self.conn.latency:
+                    self.conn.latency['t_tts_sent'] = time.monotonic()
             return
         except Exception as e:
             logger.bind(tag=TAG).error(f"发送TTS文本失败: {str(e)}")

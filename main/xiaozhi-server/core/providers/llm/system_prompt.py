@@ -39,13 +39,7 @@ if you got tool as follow
         "description": "当用户想结束对话或需要退出系统时调用",
         "parameters": {{
             "type": "object",
-            "properties": {{
-                "say_goodbye": {{
-                    "type": "string",
-                    "description": "和用户友好结束对话的告别语",
-                }}
-            }},
-            "required": ["say_goodbye"],
+            "properties": {{}}
         }},
     }},
 }}
@@ -55,9 +49,7 @@ you should respond with the following format:
 <tool_call>
 {{
     "name": "handle_exit_intent",
-    "arguments": {{
-        "say_goodbye": "再见，祝您生活愉快！"
-    }}
+    "arguments": {{}}
 }}
 </tool_call>
 

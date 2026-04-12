@@ -84,6 +84,7 @@ tts_audio_send_delay: 0
 exit_commands:
   - "退出"
   - "关闭"
+  - "再见"
 
 xiaozhi:
   type: hello
@@ -211,9 +212,8 @@ system_error_response: "主人，小智现在有点忙，我们稍后再试吧�
 # 结束语prompt
 end_prompt:
   enable: true # 是否开启结束语
-  # 结束语
-  prompt: |
-    请你以"时间过得真快"未来头，用富有感情、依依不舍的话来结束这场对话吧！
+  # 超时后固定播报的结束语，不再走大模型生成
+  response: "时间不早了，我们下次再聊啦。"
 
 # 具体处理时选择的模块(The module selected for specific processing)
 selected_module:

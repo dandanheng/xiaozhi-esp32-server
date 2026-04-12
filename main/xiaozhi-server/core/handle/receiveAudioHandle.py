@@ -1,17 +1,19 @@
 import time
 import json
 import asyncio
+import uuid
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.connection import ConnectionHandler
 from core.utils.util import audio_to_data
 from core.handle.abortHandle import handleAbortMessage
-from core.handle.intentHandler import handle_user_intent
+from core.handle.intentHandler import handle_user_intent, speak_txt
 from core.utils.output_counter import check_device_output_limit
 from core.handle.sendAudioHandle import send_stt_message, SentenceType
 
 TAG = __name__
+TIMEOUT_EXIT_RESPONSE = "时间不早了，我们下次再聊啦。"
 
 
 async def handleAudioMessage(conn: "ConnectionHandler", audio):
@@ -43,6 +45,7 @@ async def resume_vad_detection(conn: "ConnectionHandler"):
 
 
 async def startToChat(conn: "ConnectionHandler", text):
+    conn.latency["t_start_to_chat"] = time.monotonic()
     # 检查输入是否是JSON格式（包含说话人信息）
     speaker_name = None
     language_tag = None
@@ -94,6 +97,7 @@ async def startToChat(conn: "ConnectionHandler", text):
 
     # 意图未被处理，继续常规聊天流程，使用实际文本内容
     await send_stt_message(conn, actual_text)
+    conn.latency["t_chat_submit"] = time.monotonic()
     conn.executor.submit(conn.chat, actual_text)
 
 
@@ -118,10 +122,10 @@ async def no_voice_close_connect(conn: "ConnectionHandler", have_voice):
                 conn.logger.bind(tag=TAG).info("结束对话，无需发送结束提示语")
                 await conn.close()
                 return
-            prompt = end_prompt.get("prompt")
-            if not prompt:
-                prompt = "请你以```时间过得真快```未来头，用富有感情、依依不舍的话来结束这场对话吧。！"
-            await startToChat(conn, prompt)
+            response = end_prompt.get("response") or TIMEOUT_EXIT_RESPONSE
+            conn.sentence_id = str(uuid.uuid4().hex)
+            conn.logger.bind(tag=TAG).info(f"超时结束对话，固定回复: {response}")
+            speak_txt(conn, response)
 
 
 async def max_out_size(conn: "ConnectionHandler"):

@@ -100,7 +100,7 @@ class IntentProvider(IntentProviderBase):
             "```\n"
             "```\n"
             "用户: 我想结束对话\n"
-            '返回: {"function_call": {"name": "handle_exit_intent", "arguments": {"say_goodbye": "goodbye"}}}\n'
+            '返回: {"function_call": {"name": "handle_exit_intent"}}\n'
             "```\n"
             "```\n"
             "用户: 你好啊\n"

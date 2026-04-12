@@ -7,22 +7,14 @@ if TYPE_CHECKING:
 
 TAG = __name__
 logger = setup_logging()
+FIXED_EXIT_RESPONSE = "再见啦"
 
 handle_exit_intent_function_desc = {
     "type": "function",
     "function": {
         "name": "handle_exit_intent",
         "description": "当用户想结束对话或需要退出系统时调用",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "say_goodbye": {
-                    "type": "string",
-                    "description": "和用户友好结束对话的告别语",
-                }
-            },
-            "required": ["say_goodbye"],
-        },
+        "parameters": {"type": "object", "properties": {}},
     },
 }
 
@@ -34,12 +26,12 @@ def handle_exit_intent(conn: "ConnectionHandler", say_goodbye: str | None = None
     conn.is_exiting = True
     # 处理退出意图
     try:
-        if say_goodbye is None:
-            say_goodbye = "再见，祝您生活愉快！"
         conn.close_after_chat = True
-        logger.bind(tag=TAG).info(f"退出意图已处理:{say_goodbye}")
+        logger.bind(tag=TAG).info(f"退出意图已处理:{FIXED_EXIT_RESPONSE}")
         return ActionResponse(
-            action=Action.RESPONSE, result="退出意图已处理", response=say_goodbye
+            action=Action.RESPONSE,
+            result="退出意图已处理",
+            response=FIXED_EXIT_RESPONSE,
         )
     except Exception as e:
         logger.bind(tag=TAG).error(f"处理退出意图错误: {e}")
