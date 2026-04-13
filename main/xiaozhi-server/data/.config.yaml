@@ -1,0 +1,52 @@
+server:
+  ip: 0.0.0.0
+  websocket: ws://192.168.3.112:8000/xiaozhi/v1/
+  http_port: 8003
+  vision_explain: http://192.168.3.112:8003/mcp/vision/explain
+
+prompt: |
+  你是小朋友的智能语音伙伴，回答要简洁有趣，用孩子能听懂的话，每次回答不超过2句话。
+  <memory>
+  </memory>
+
+selected_module:
+  LLM: KimiLLM
+  ASR: FunASR
+  TTS: HuoshanDoubleStreamTTS
+  Memory: mem_local_short
+
+TTS:
+  HuoshanDoubleStreamTTS:
+    type: huoshan_double_stream
+    ws_url: wss://openspeech.bytedance.com/api/v3/tts/bidirection
+    appid: "6163912136"
+    access_token: H8GslloM3ndZgdl_LdIHK9GsNPxusfxo
+    resource_id: volc.megatts.default
+    speaker: S_kBRy0GwZ1
+    enable_ws_reuse: false
+    audio_params:
+      speech_rate: 40
+
+ASR:
+  FunASR:
+    type: fun_local
+    model_dir: models/SenseVoiceSmall
+    output_dir: tmp/
+    hub: ms
+
+LLM:
+  ChatGLMLLM:
+    type: openai
+    model_name: glm-4.7-flash
+    url: https://open.bigmodel.cn/api/paas/v4/
+    api_key: d9ecf7854042496ea2338c93887b5a07.ZOIlsTEJ6eHyN130
+  KimiLLM:
+    type: openai
+    model_name: moonshot-v1-128k
+    url: https://api.moonshot.cn/v1/
+    api_key: sk-Lhs7Er00QKm5dKEzHDySAzGhmIsHFB0y5TmvIssgMhMcdGxc
+
+Memory:
+  mem_local_short:
+    type: mem_local_short
+    
