@@ -15,6 +15,6 @@ class MemoryProvider(MemoryProviderBase):
         logger.bind(tag=TAG).debug("mem_report_only mode: No memory saving or summarization is performed.")
         return None
 
-    async def query_memory(self, query: str) -> str:
+    async def query_memory(self, query: str, **kwargs) -> str:
         logger.bind(tag=TAG).debug("mem_report_only mode: No memory query is performed.")
         return ""

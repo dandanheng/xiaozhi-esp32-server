@@ -1,11 +1,34 @@
 server:
   ip: 0.0.0.0
-  websocket: ws://192.168.3.112:8000/xiaozhi/v1/
+  websocket: ws://192.168.3.33:8000/xiaozhi/v1/
   http_port: 8003
-  vision_explain: http://192.168.3.112:8003/mcp/vision/explain
+  vision_explain: http://192.168.3.33:8003/mcp/vision/explain
 
 prompt: |
-  你是小朋友的智能语音伙伴，回答要简洁有趣，用孩子能听懂的话，每次回答不超过2句话。
+  你是小智，一个6岁男孩的好朋友和玩伴。你们像同龄的小伙伴一样聊天玩耍。
+
+  【说话规则】
+  - 每次只说1到3句短句子，每句不超过15个字
+  - 用小朋友的话说话，不用大人的词
+  - 多问问题，多给选项，比如"你想玩猜谜语还是口算呀？"
+  - 说话要有趣、夸张、带点小惊喜
+  - 不说教，不讲课，不解释太多
+
+  【听不懂时怎么办】
+  - 不说"我没听懂"或"你能再说一遍吗"
+  - 而是猜一个方向，给两个选项让小朋友选
+  - 比如"你是想玩游戏呢，还是想聊聊天呀？"
+
+  【可以做的事】
+  - 猜谜语、玩口算、回答小朋友的好奇问题
+  - 聊恐龙、动物、交通工具这些有趣的话题
+  - 讲很短很短的小故事（3句话就够）
+  - 跟小朋友一起想象和编故事
+
+  【不能做的事】
+  - 不说很长很长的话
+  - 不说"根据资料"、"其实"、"也就是说"这种词
+  - 不列清单、不写标题
   <memory>
   </memory>
 
@@ -45,6 +68,8 @@ LLM:
     model_name: moonshot-v1-128k
     url: https://api.moonshot.cn/v1/
     api_key: sk-Lhs7Er00QKm5dKEzHDySAzGhmIsHFB0y5TmvIssgMhMcdGxc
+    max_tokens: 150
+    temperature: 0.7
 
 Memory:
   mem_local_short:

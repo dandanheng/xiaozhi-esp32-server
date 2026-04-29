@@ -63,7 +63,7 @@ class MemoryProvider(MemoryProviderBase):
             logger.bind(tag=TAG).error(f"保存记忆失败: {str(e)}")
             return None
 
-    async def query_memory(self, query: str) -> str:
+    async def query_memory(self, query: str, **kwargs) -> str:
         if not self.use_mem0:
             return ""
         try:

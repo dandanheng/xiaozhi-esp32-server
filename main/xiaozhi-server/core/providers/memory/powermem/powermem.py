@@ -216,7 +216,7 @@ class MemoryProvider(MemoryProviderBase):
             logger.bind(tag=TAG).debug(f"Detailed error: {traceback.format_exc()}")
             return None
 
-    async def query_memory(self, query: str) -> str:
+    async def query_memory(self, query: str, **kwargs) -> str:
         """
         Query memories from PowerMem based on similarity search.
 
@@ -342,4 +342,3 @@ class MemoryProvider(MemoryProviderBase):
             return self.last_profile_content
 
         return ""
-
