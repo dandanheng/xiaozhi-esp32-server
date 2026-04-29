@@ -187,3 +187,5 @@ uploadfile
 !main/manager-mobile/**/.env*
 !main/manager-mobile/**/*.json
 !main/xiaozhi-server/**/*.json
+# Live2D model files
+*.cmo3
